@@ -70,11 +70,12 @@ public class Engine {
 		if(!where.isEmpty()) cwhere= " where "+where;
 
 		long tr = Long.parseLong(tableRows);//numero di righe della tabella
-		double g=this.setFactor(st); //fattore
-					
-		long n=(long) (tr/g);	//righe da estrarre
-		//System.out.println("Rows\t"+tr+"\tN\t"+n+"\tFactor\t"+g);
+		double g=block.factor;//this.setFactor(st); //fattore
 		
+		long n=(long) (tr/g);	//righe da estrarre
+		System.out.println("Rows\t"+tr+"\tN\t"+n+"\tFactor\t"+g);
+		
+		double start_time = System.currentTimeMillis();
 		String query2="select "+function+"("+columnName+") from (select * from "+tableName+cwhere+" LIMIT 0,"+n+") as t";
 		//System.out.println(query2);
 
@@ -93,8 +94,10 @@ public class Engine {
 			finale=g*result;
 		}
 
-		System.out.println(Math.round(finale));
-		
+		double final_time = System.currentTimeMillis();
+		double difference = (final_time - start_time)/1000;
+		System.out.println("\t-->"+Math.round(finale)+"\t"+difference+" secs");
+
 		//System.out.println("STD DEV\t"+stddev);
 		//System.out.println("["+Math.round(finale-(st))+","+Math.round(finale+(st))+"]\twith p = 67%");
 		//System.out.println("["+Math.round(finale-(2*st))+","+Math.round(finale+(2*st))+"]\twith p = 95%");
@@ -136,7 +139,7 @@ public class Engine {
 	
 	private void getTables() throws SQLException
 	{
-		System.out.println("Extracting tables");
+		//System.out.println("Extracting tables");
         ResultSet rs;
 		Statement statement=connection.createStatement();
         String query="select TABLE_NAME, TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='"+database+"' and TABLE_TYPE='BASE TABLE'";
@@ -155,7 +158,7 @@ public class Engine {
 	private void getColumns(String tableName) throws SQLException
 	{
 		
-		System.out.println("Extacting columns in "+tableName);
+		//System.out.println("Extacting columns in "+tableName);
 		ResultSet ds;
 
 		ds = connection.getMetaData().getColumns(database, null,tableName, null);
@@ -174,7 +177,7 @@ public class Engine {
 	
 	private void getSummary(String tableName, String columnName)  throws SQLException
 	{
-		System.out.println("Computing summaries of "+columnName +" in "+tableName);
+		//System.out.println("Computing summaries of "+columnName +" in "+tableName);
 		String query="select min("+columnName+") as min,max("+columnName+") as max,round(avg("+columnName+"),2) as avg,round(stddev("+columnName+"),2) as stddev from "+tableName;
 		String y[] = new String[4];
         Statement statement=connection.createStatement();
@@ -194,7 +197,23 @@ public class Engine {
         block.avg=y[2];
         block.stddev=y[3];
         
+        
+        double cf=Double.parseDouble(y[3])/Double.parseDouble(y[2]);
+        double cf2;
+        double min=0.1;
+        double max=1;
+        double min2=10;
+        double max2=90;
+        
+        if(cf<=min) cf2=min2;
+        else if(cf>=max) cf2=max2;
+        else cf2=(cf-min)/(max-min)*(max2-min2)+min2;
+        
+        block.factor=100/cf2;
+        System.out.println(tableName+"."+columnName+"\tAVG "+y[2]+"\tSTD "+y[3]+"\tCF "+cf+"\tCF2 "+cf2+"\tFact "+block.factor);
         columnMap.put(tableName+"."+columnName, block);
+        
+        
 	}
 	
 	

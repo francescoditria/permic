@@ -7,6 +7,7 @@ import ui.CLI;
 public class Controller {
 	
 	Parser parser=new Parser();
+	String version="1.1";
 	
 	public void start(String target) throws SQLException
 	{
@@ -15,7 +16,8 @@ public class Controller {
 		CLI cli=new CLI();
 		String query;
 		boolean stop;
-		
+
+		cli.showIntro(version);
 		do 
 		{
 			query=cli.showPrompt();

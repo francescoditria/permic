@@ -5,6 +5,7 @@ public class Block {
 	String min;
 	String max;
 	String avg;
-	String stddev;		
+	String stddev;	
+	double factor;
 	
 }
