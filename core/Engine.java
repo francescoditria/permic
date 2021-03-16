@@ -36,7 +36,7 @@ public class Engine {
 		    
 		
         } catch (ClassNotFoundException | SQLException e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			System.out.println("Connection error");
 		}
        
@@ -75,33 +75,51 @@ public class Engine {
 		long n=(long) (tr/g);	//righe da estrarre
 		System.out.println("Rows\t"+tr+"\tN\t"+n+"\tFactor\t"+g);
 		
-		double start_time = System.currentTimeMillis();
 		String query2="select "+function+"("+columnName+") from (select * from "+tableName+cwhere+" LIMIT 0,"+n+") as t";
 		//System.out.println(query2);
 
 		Statement statement=connection.createStatement();
-		ResultSet rs = statement.executeQuery(query2);
+		ResultSet rs;
+		Double result;
+		double finale;		
+		double start_time;
+		double final_time;
+		double difference;
+		
+		start_time = System.currentTimeMillis();
+		rs = statement.executeQuery(query2);
 		rs.next();
-		Double result=rs.getDouble(1);
+		result=rs.getDouble(1);
 		//System.out.println("Result\t"+result);
 
 		//double fattore=tr/n;
 		//System.out.println("Factor\t"+fattore);
-		double finale=result;
+		finale=result;
 		if(function.equals("sum") || function.equals("count")) 
         {
 			//finale=fattore*result;
 			finale=g*result;
 		}
 
-		double final_time = System.currentTimeMillis();
-		double difference = (final_time - start_time)/1000;
+		final_time = System.currentTimeMillis();
+		difference = (final_time - start_time)/1000;
 		System.out.println("\t-->"+Math.round(finale)+"\t"+difference+" secs");
 
 		//System.out.println("STD DEV\t"+stddev);
 		//System.out.println("["+Math.round(finale-(st))+","+Math.round(finale+(st))+"]\twith p = 67%");
 		//System.out.println("["+Math.round(finale-(2*st))+","+Math.round(finale+(2*st))+"]\twith p = 95%");
 		//System.out.println("["+Math.round(finale-(3*st))+","+Math.round(finale+(3*st))+"]\twith p = 97%");
+		
+
+		/*//////////////////exact answer
+		start_time = System.currentTimeMillis();
+		rs = statement.executeQuery(query);
+		rs.next();
+		result=rs.getDouble(1);
+		final_time = System.currentTimeMillis();
+		difference = (final_time - start_time)/1000;
+		System.out.println("exact\t-->"+result+"\t"+difference+" secs");
+		*/
 		
 		
 	}
@@ -141,13 +159,20 @@ public class Engine {
 	{
 		//System.out.println("Extracting tables");
         ResultSet rs;
+        ResultSet rs2;
 		Statement statement=connection.createStatement();
         String query="select TABLE_NAME, TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='"+database+"' and TABLE_TYPE='BASE TABLE'";
         rs = statement.executeQuery(query);
         while (rs.next()) {
         	
         	String tableName=rs.getString("TABLE_NAME");
-        	String tableRows=rs.getString("TABLE_ROWS");
+        	//String tableRows=rs.getString("TABLE_ROWS");
+        	Statement statement2=connection.createStatement();
+            String query2="select count(*) as N from "+database+"."+tableName;
+            rs2 = statement2.executeQuery(query2);
+            rs2.next();
+            String tableRows=rs2.getString("N");
+        	
         	//System.out.println(tableName+ "\t" +tableRows);
         	tableMap.put(tableName, tableRows);
         	this.getColumns(tableName);
